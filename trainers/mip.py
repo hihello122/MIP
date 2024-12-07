@@ -21,7 +21,9 @@ _tokenizer = _Tokenizer()
 def load_clip_to_cpu(cfg):
     backbone_name = cfg.MODEL.BACKBONE.NAME
     url = clip._MODELS[backbone_name]
-    model_path = clip._download(url)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model_path = clip._download(url,device)
+
 
     try:
         # loading JIT archive
