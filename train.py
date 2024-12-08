@@ -111,6 +111,7 @@ def extend_cfg(cfg):
     cfg.TRAINER.MIP.CTX_INIT = ""  # initialization words
     cfg.TRAINER.MIP.PREC = "fp16"  # fp16, fp32, amp
 
+
     cfg.DATASET.SUBSAMPLE_CLASSES = "all"  # all, base or new
 
 
@@ -165,8 +166,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--root", type=str, default="data/", help="path to dataset")
-    parser.add_argument("--output-dir", type=str, default="output/mip", help="output directory")
+    parser.add_argument("--root", type=str, default="", help="path to dataset")
+    parser.add_argument("--output-dir", type=str, default="", help="output directory")
     parser.add_argument(
         "--resume",
         type=str,
@@ -186,15 +187,15 @@ if __name__ == "__main__":
         "--transforms", type=str, nargs="+", help="data augmentation methods"
     )
     parser.add_argument(
-        "--config-file", type=str, default="configs/trainers/MIP/vit_b16_c4_ep10_batch1.yaml", help="path to config file"
+        "--config-file", type=str, default="", help="path to config file"
     )
     parser.add_argument(
         "--dataset-config-file",
         type=str,
-        default="configs/datasets/eurosat.yaml",
+        default="",
         help="path to config file for dataset setup",
     )
-    parser.add_argument("--trainer", type=str, default="MIP", help="name of trainer")
+    parser.add_argument("--trainer", type=str, default="", help="name of trainer")
     parser.add_argument("--backbone", type=str, default="", help="name of CNN backbone")
     parser.add_argument("--head", type=str, default="", help="name of head")
     parser.add_argument("--eval-only", action="store_true", help="evaluation only")
