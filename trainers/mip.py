@@ -64,7 +64,7 @@ class MIPPromptLearner(nn.Module):
   def __init__(self,cfg,classname,clip_model):
     super().__init__()
     n_cls = len(classname)
-    n_ctx = cfg.TRAINER.MIP.CTX
+    n_ctx = cfg.TRAINER.MIP.N_CTX
     ctx_init = cfg.TRAINER.MIP.CTX_INIT
     dtype = clip_model.dtype
     ctx_dim = clip_model.ln_final.weight.shape[0]
