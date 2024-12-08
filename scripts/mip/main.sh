@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # custom config
-DATA=/path/to/datasets
+DATA=/datasets
 TRAINER=MIP
 
 DATASET=$1
