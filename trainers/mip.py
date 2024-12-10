@@ -4,6 +4,7 @@ import math
 
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from torch.nn import functional as F
 from torch.cuda.amp import GradScaler, autocast
 
@@ -64,6 +65,7 @@ class TextEncoder(nn.Module):
 class MIPPromptLearner(nn.Module):
     def __init__(self,cfg,classname,clip_model):
         super().__init__()
+        device = "cuda"
         n_cls = len(classname)
         n_ctx = cfg.TRAINER.MIP.N_CTX
         ctx_init = cfg.TRAINER.MIP.CTX_INIT
@@ -74,7 +76,8 @@ class MIPPromptLearner(nn.Module):
         cfg_imsize = cfg.INPUT.SIZE[0]
         assert cfg_imsize == clip_imsize, f"cfg_imsze ({cfg_imsize}) must equal to clip imsize({clip_imsize})"
 
-        self.meta_features = clip_model.ln_final.type(dtype).weight.mean(dim=-1).to(device)
+        self.meta_features_norm = clip_model.ln_final.weight.to(dtype) /clip_model.ln_final.weight.to(dtype).norm(dim=-1, keepdim=True)
+        self.meta_features = clip_model.ln_final.weight.to(dtype)
 
         if ctx_init:
             # use given words to initialize context vectors
@@ -86,10 +89,9 @@ class MIPPromptLearner(nn.Module):
             ctx_vectors = embedding[0, 1 : 1 + n_ctx, :]
             prompt_prefix = ctx_init
         else:
-            # random initialization
-            ctx_vectors = torch.empty(n_ctx, ctx_dim, dtype=dtype)
-            nn.init.normal_(ctx_vectors, std=0.02)
+            ctx_vectors = self.meta_features_norm.unsqueeze(0).expand(n_ctx, -1)  # 메타 정보 반복
             prompt_prefix = " ".join(["X"] * n_ctx)
+
 
         print(f'Initial context: "{prompt_prefix}"')
         print(f"Number of context words (tokens): {n_ctx}")
@@ -145,11 +147,11 @@ class MIPPromptLearner(nn.Module):
         prefix = self.token_prefix
         suffix = self.token_suffix
         ctx = self.ctx                     # (n_ctx, ctx_dim)
+        meta_features_derivation = math.sqrt(self.meta_features.shape[0])
         bias = self.meta_net(im_features)  # (batch, ctx_dim)
         bias = bias.unsqueeze(1)
-        meta_bias = self.meta_features.unsqueeze(-1)    # (batch, 1, ctx_dim)
-        ctx = ctx.unsqueeze(0)             # (1, n_ctx, ctx_dim)
-        ctx_shifted = ctx + bias + meta_bias           # (batch, n_ctx, ctx_dim)
+        ctx = ctx.unsqueeze(0)           # (1, n_ctx, ctx_dim)
+        ctx_shifted = (ctx + bias)/meta_features_derivation   # (batch, n_ctx, ctx_dim)
         
         # Use instance-conditioned context tokens for all classes
         prompts = []
@@ -158,7 +160,6 @@ class MIPPromptLearner(nn.Module):
             pts_i = self.construct_prompts(ctx_i, prefix, suffix)  # (n_cls, n_tkn, ctx_dim)
             prompts.append(pts_i)
         prompts = torch.stack(prompts)
-        
         return prompts
     
 

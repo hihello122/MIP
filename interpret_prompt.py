@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import torch
+import os.path as osp
 
 from clip.simple_tokenizer import SimpleTokenizer
 from clip import clip
@@ -9,8 +10,7 @@ from clip import clip
 
 def load_clip_to_cpu(backbone_name="RN50"):
     url = clip._MODELS[backbone_name]
-    model_path = clip._download(url)
-
+    model_path = clip._download(url,osp.expanduser("~/.cache/clip"))
     try:
         # loading JIT archive
         model = torch.jit.load(model_path, map_location="cpu").eval()
