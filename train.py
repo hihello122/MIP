@@ -111,7 +111,6 @@ def extend_cfg(cfg):
     cfg.TRAINER.MIP.CTX_INIT = ""  # initialization words
     cfg.TRAINER.MIP.PREC = "fp16"  # fp16, fp32, amp
 
-
     cfg.DATASET.SUBSAMPLE_CLASSES = "all"  # all, base or new
 
 
